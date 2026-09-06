@@ -45,6 +45,13 @@ dependencies {
     implementation("com.facebook.react:hermes-android")
 }
 
-// Autolink native modules for RN 0.72+
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle");
-applyNativeModulesAppBuildGradle(project)
+// Dynamically resolve CLI autolinking path via Node.js
+def reactNativeCliGradleScript = ["node", "-e", "console.log(require.resolve('@react-native-community/cli-platform-android/package.json'))"].execute([], project.rootDir).text.trim()
+if (reactNativeCliGradleScript) {
+    def cliDir = new File(reactNativeCliGradleScript).parentFile
+    def nativeModulesScript = new File(cliDir, "native_modules.gradle")
+    if (nativeModulesScript.exists()) {
+        apply from: nativeModulesScript
+        applyNativeModulesAppBuildGradle(project)
+    }
+}
