@@ -1,2 +1,13 @@
 rootProject.name = "MobileMetaHub"
 include(':app')
+
+// Autolink native packages & generate PackageList.java
+def reactNativeCliSettingsScript = ["node", "-e", "console.log(require.resolve('@react-native-community/cli-platform-android/package.json'))"].execute([], project.rootDir).text.trim()
+if (reactNativeCliSettingsScript) {
+    def cliDir = new File(reactNativeCliSettingsScript).parentFile
+    def nativeModulesSettingsScript = new File(cliDir, "native_modules.gradle")
+    if (nativeModulesSettingsScript.exists()) {
+        apply from: nativeModulesSettingsScript
+        applyNativeModulesSettingsGradle(settings)
+    }
+}
