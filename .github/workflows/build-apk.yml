@@ -28,6 +28,14 @@ jobs:
         run: |
           mkdir -p android/app/src/main/assets
           npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          
+          # Ensure gradle-wrapper.jar exists before executing gradlew
+          if [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Downloading missing gradle-wrapper.jar..."
+            mkdir -p android/gradle/wrapper
+            curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar -o android/gradle/wrapper/gradle-wrapper.jar
+          fi
+          
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
