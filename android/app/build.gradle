@@ -1,9 +1,10 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
 
-project.ext.react = [
-    enableHermes: true
-]
+react {
+    autolinkLibrariesWithApp = true
+}
 
 android {
     ndkVersion "23.1.7779620"
@@ -50,18 +51,6 @@ android {
 }
 
 dependencies {
-    implementation("com.facebook.react:react-android:0.72.6")
-    implementation("com.facebook.react:hermes-android:0.72.6")
-    implementation("com.facebook.soloader:soloader:0.10.5")
-}
-
-// Enable dynamic autolinking execution & generate PackageList
-def cliPath = ["node", "-e", "console.log(require.resolve('@react-native-community/cli-platform-android/package.json'))"].execute([], project.rootDir).text.trim()
-if (cliPath) {
-    def cliDir = new File(cliPath).parentFile
-    def nativeModulesScript = new File(cliDir, "native_modules.gradle")
-    if (nativeModulesScript.exists()) {
-        apply from: nativeModulesScript
-        applyNativeModulesAppBuildGradle(project)
-    }
+    implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:hermes-android")
 }
