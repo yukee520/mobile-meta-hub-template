@@ -21,13 +21,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        
-        // Point Gradle to React Native local binaries in node_modules
-        maven {
-            url("$rootDir/../node_modules/react-native/android")
-        }
-        maven {
-            url("$rootDir/../node_modules/jsc-android/dist")
-        }
+
+        // Local AAR resolution paths
+        maven { url("$rootDir/../node_modules/react-native/android") }
+        maven { url("$rootDir/../node_modules/jsc-android/dist") }
+        maven { url("$rootDir/../node_modules/soloader/android") }
     }
 }
