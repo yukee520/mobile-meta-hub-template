@@ -1,20 +1,21 @@
 apply plugin: "com.android.application"
-apply plugin: "com.facebook.react"
 apply plugin: "org.jetbrains.kotlin.android"
 
 project.ext.react = [
     enableHermes: true
 ]
 
+apply from: "../../node_modules/react-native/react.gradle"
+
 android {
-    ndkVersion rootProject.hasProperty('ndkVersion') ? rootProject.ext.ndkVersion : "23.1.7779620"
-    compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 33
+    ndkVersion "23.1.7779620"
+    compileSdkVersion 33
     namespace "com.mobilemetahub"
 
     defaultConfig {
         applicationId "com.mobilemetahub"
-        minSdkVersion rootProject.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 21
-        targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 33
+        minSdkVersion 21
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
     }
