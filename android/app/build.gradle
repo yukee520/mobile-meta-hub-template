@@ -5,8 +5,6 @@ project.ext.react = [
     enableHermes: true
 ]
 
-apply from: "../node_modules/react-native/react.gradle"
-
 android {
     ndkVersion "23.1.7779620"
     compileSdkVersion 33
@@ -46,3 +44,7 @@ dependencies {
     implementation("com.facebook.react:react-android")
     implementation("com.facebook.react:hermes-android")
 }
+
+// Autolink native modules for RN 0.72+
+apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle");
+applyNativeModulesAppBuildGradle(project)

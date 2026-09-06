@@ -1,2 +1,2 @@
 rootProject.name = "MobileMetaHub"
-include(":app")
+include(':app')
