@@ -1,43 +1,33 @@
 apply plugin: "com.android.application"
-apply plugin: "kotlin-android"
-apply plugin: "com.facebook.react"
+apply plugin: "org.jetbrains.kotlin.android"
+apply from: "../../node_modules/react-native/react.gradle"
 
-react {
-    autolinkLibrariesWithApp()
-}
+project.ext.react = [
+    enableHermes: true
+]
 
 android {
     ndkVersion rootProject.ext.ndkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    namespace "com.mobilemetahub"
 
-    namespace "com.mobilemetahub.app"
     defaultConfig {
-        applicationId "com.mobilemetahub.app"
+        applicationId "com.mobilemetahub"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
-        
-        ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-        }
-    }
-
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
+        versionName "1.0"
     }
 
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
-            keyAlias 'androiddebug'
+            keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
     }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -53,5 +43,4 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
     implementation("com.facebook.react:hermes-android")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}")
 }
