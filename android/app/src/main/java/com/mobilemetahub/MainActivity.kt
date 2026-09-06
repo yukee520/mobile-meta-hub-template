@@ -1,4 +1,4 @@
-package com.mobilemetahub.app
+package com.mobilemetahub
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -7,8 +7,8 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
 
-  override fun getMainComponentName(): String? = "mobilemetahub"
+  override fun getMainComponentName(): String = "MobileMetaHub"
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
-      DefaultReactActivityDelegate(this, mainComponentName!!, fabricEnabled)
+      DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 }
