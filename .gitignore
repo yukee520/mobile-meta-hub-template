@@ -1,5 +1,6 @@
 node_modules/
-.metro/
-android/app/build/
+.data/
+.env
 android/.gradle/
-*.apk
+android/app/build/
+android/build/
