@@ -5,11 +5,12 @@ project.ext.react = [
     enableHermes: true
 ]
 
-apply from: "../../node_modules/react-native/react.gradle"
+apply from: "../node_modules/react-native/react.gradle"
 
 android {
     ndkVersion "23.1.7779620"
     compileSdkVersion 33
+    buildToolsVersion "33.0.0"
     namespace "com.mobilemetahub"
 
     defaultConfig {
