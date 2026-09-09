@@ -19,6 +19,10 @@ android {
         versionName "1.0"
     }
 
+    buildFeatures {
+        buildConfig true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -55,10 +59,10 @@ dependencies {
     implementation("com.facebook.soloader:soloader:0.10.5")
 }
 
-// Execute Native Modules Autolinking to generate PackageList
-def autoLinkScript = new File(projectDir, "../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+// Execute Native Modules Autolinking
+def autoLinkScript = new File(projectDir, "../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 if (!autoLinkScript.exists()) {
-    autoLinkScript = new File(projectDir, "../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+    autoLinkScript = new File(projectDir, "../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 }
 if (autoLinkScript.exists()) {
     apply from: autoLinkScript
