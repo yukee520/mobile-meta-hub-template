@@ -5,18 +5,27 @@ project.ext.react = [
     enableHermes: true
 ]
 
+// 1. Resolve Dynamic App Name & Package ID
+def rawAppName = project.hasProperty("APP_NAME") ? project.getProperty("APP_NAME") : "MobileMetaHub"
+def sanitizedPkgName = rawAppName.toLowerCase().replaceAll("[^a-z0-9]", "")
+if (sanitizedPkgName.isEmpty()) { sanitizedPkgName = "mobilemetahub" }
+def dynamicPkgId = "com.${sanitizedPkgName}.app"
+
 android {
     ndkVersion "23.1.7779620"
     compileSdkVersion 33
     buildToolsVersion "33.0.0"
-    namespace "com.mobilemetahub"
+    namespace dynamicPkgId
 
     defaultConfig {
-        applicationId "com.mobilemetahub"
+        applicationId dynamicPkgId
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
+
+        // Dynamic App Launcher Name (Home Screen Display)
+        resValue "string", "app_name", rawAppName
 
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", "false"
         buildConfigField "boolean", "IS_HERMES_ENABLED", "true"
@@ -54,6 +63,13 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+
+    // Dynamic Output APK File Renaming
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "${rawAppName}-${variant.buildType.name}.apk"
+        }
+    }
 }
 
 dependencies {
@@ -62,7 +78,6 @@ dependencies {
     implementation("com.facebook.soloader:soloader:0.10.5")
 }
 
-// Execute Native Modules Autolinking
 def autoLinkScript = new File(projectDir, "../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 if (!autoLinkScript.exists()) {
     autoLinkScript = new File(projectDir, "../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
