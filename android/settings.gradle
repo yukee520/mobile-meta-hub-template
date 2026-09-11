@@ -1,12 +1,5 @@
 pluginManagement {
     includeBuild("../node_modules/@react-native/gradle-plugin")
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == "com.android.application" || requested.id.id == "com.android.library") {
-                useModule("com.android.tools.build:gradle:8.7.2")
-            }
-        }
-    }
 }
 plugins {
     id("com.facebook.react.settings")
@@ -16,3 +9,4 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 rootProject.name = 'mobile-meta-hub-template'
 include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
