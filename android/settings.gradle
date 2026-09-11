@@ -1,8 +1,6 @@
-rootProject.name = "MobileMetaHub"
-include(':app')
-
-def settingsAutoLinkScript = new File(settingsDir, "../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-if (settingsAutoLinkScript.exists()) {
-    apply from: settingsAutoLinkScript
-    applyNativeModulesSettingsGradle(settings)
-}
+pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'TempApp'
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
