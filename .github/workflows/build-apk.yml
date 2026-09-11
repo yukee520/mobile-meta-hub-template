@@ -4,64 +4,93 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-    inputs:
-      app_name:
-        description: 'Custom App Name (Optional override)'
-        required: false
-        default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+    - name: Set up Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
-      - name: Install Dependencies
-        run: npm ci || npm install
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Rename App Dynamically
-        run: |
-          RAW_NAME="${{ github.event.inputs.app_name || github.event.repository.name }}"
-          CLEAN_NAME=$(echo "$RAW_NAME" | sed 's/[^a-zA-Z0-9]//g')
-          LOWER_NAME=$(echo "$CLEAN_NAME" | tr '[:upper:]' '[:lower:]')
+    - name: Install Dependencies
+      run: npm install
 
-          echo "Setting app display name to: $CLEAN_NAME"
+    - name: Dynamically Rebrand React Native App
+      run: |
+        # 1. Derive dynamic names from repository name
+        RAW_NAME="${{ github.event.repository.name }}"
+        APP_NAME="$RAW_NAME"
+        CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+        PACKAGE_NAME="com.${CLEAN_PKG}.app"
 
-          # 1. Update app.json
-          sed -i "s/\"name\": \".*\"/\"name\": \"$CLEAN_NAME\"/g" app.json
-          sed -i "s/\"displayName\": \".*\"/\"displayName\": \"$CLEAN_NAME\"/g" app.json
+        OLD_NAME="MobileMetaHub"
 
-          # 2. Update Android Display Title in strings.xml
-          if [ -f android/app/src/main/res/values/strings.xml ]; then
-            sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$CLEAN_NAME<\/string>/g" android/app/src/main/res/values/strings.xml
-          fi      
+        echo "Rebranding template '$OLD_NAME' -> Name: '$APP_NAME', Package: '$PACKAGE_NAME'"
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+        # 2. Update app.json
+        if [ -f app.json ]; then
+          npx jq ".name=\"$APP_NAME\" | .displayName=\"$APP_NAME\"" app.json > tmp.json && mv tmp.json app.json
+        fi
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        # 3. Update Android App Name (Launcher Title)
+        STRINGS_FILE="android/app/src/main/res/values/strings.xml"
+        if [ -f "$STRINGS_FILE" ]; then
+          sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$APP_NAME<\/string>/" "$STRINGS_FILE"
+        fi
 
-      - name: Clean & Build Android Debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew clean
-          ./gradlew assembleDebug --no-daemon
+        # 4. Update Application ID in build.gradle
+        GRADLE_FILE="android/app/build.gradle"
+        if [ -f "$GRADLE_FILE" ]; then
+          sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
+        fi
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: error
+        # 5. Update AppRegistry in index.js / App.js
+        for ENTRY_FILE in index.js App.js index.android.js; do
+          if [ -f "$ENTRY_FILE" ]; then
+            sed -i "s/AppRegistry.registerComponent('$OLD_NAME'/AppRegistry.registerComponent('$APP_NAME'/" "$ENTRY_FILE"
+            sed -i "s/AppRegistry.registerComponent(\"$OLD_NAME\"/AppRegistry.registerComponent(\"$APP_NAME\"/" "$ENTRY_FILE"
+          fi
+        done
+
+        # 6. Update Native MainActivity (Kotlin or Java)
+        MAIN_ACT_KT=$(find android/app/src/main/java -name "MainActivity.kt" 2>/dev/null)
+        MAIN_ACT_JAVA=$(find android/app/src/main/java -name "MainActivity.java" 2>/dev/null)
+
+        if [ -n "$MAIN_ACT_KT" ]; then
+          sed -i "s/getMainComponentName(): String = \"$OLD_NAME\"/getMainComponentName(): String = \"$APP_NAME\"/" "$MAIN_ACT_KT"
+          sed -i "s/getMainComponentName(): String? = \"$OLD_NAME\"/getMainComponentName(): String? = \"$APP_NAME\"/" "$MAIN_ACT_KT"
+        fi
+
+        if [ -n "$MAIN_ACT_JAVA" ]; then
+          sed -i "s/getMainComponentName() { return \"$OLD_NAME\"; }/getMainComponentName() { return \"$APP_NAME\"; }/" "$MAIN_ACT_JAVA"
+        fi
+
+        echo "Rebranding complete!"
+
+    - name: Make Gradle executable
+      run: chmod +x android/gradlew
+
+    - name: Build Android Release APK
+      run: |
+        cd android
+        ./gradlew assembleRelease --no-daemon
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.repository.name }}-APK
+        path: android/app/build/outputs/apk/release/*.apk
+        
