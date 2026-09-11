@@ -33,7 +33,7 @@ jobs:
           LOWER_NAME=$(echo "$CLEAN_NAME" | tr '[:upper:]' '[:lower:]')
 
           echo "Renaming app to: $CLEAN_NAME with bundle ID: com.mobilemetahub.$LOWER_NAME"
-          npx react-native-rename "$CLEAN_NAME" -b "com.mobilemetahub.$LOWER_NAME"
+          npx react-native-rename "$CLEAN_NAME" -b "com.mobilemetahub.$LOWER_NAME" --skip-git-statu
 
       - name: Setup Java JDK
         uses: actions/setup-java@v5
