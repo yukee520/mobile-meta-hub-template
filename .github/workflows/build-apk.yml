@@ -1,46 +1,60 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Custom App Name (Optional override)'
+        required: false
+        default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      - name: Build Android Bundle & APK
+      - name: Rename App Dynamically
         run: |
-          mkdir -p android/app/src/main/assets
-          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          RAW_NAME="${{ github.event.inputs.app_name || github.event.repository.name }}"
+          CLEAN_NAME=$(echo "$RAW_NAME" | sed 's/[^a-zA-Z0-9]//g')
+          LOWER_NAME=$(echo "$CLEAN_NAME" | tr '[:upper:]' '[:lower:]')
 
-          if [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Downloading missing gradle-wrapper.jar..."
-            mkdir -p android/gradle/wrapper
-            curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar -o android/gradle/wrapper/gradle-wrapper.jar
-          fi
+          echo "Renaming app to: $CLEAN_NAME with bundle ID: com.mobilemetahub.$LOWER_NAME"
+          npx react-native-rename "$CLEAN_NAME" -b "com.mobilemetahub.$LOWER_NAME"
 
+      - name: Setup Java JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Clean & Build Android Debug APK
+        run: |
           cd android
           chmod +x gradlew
+          ./gradlew clean
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
