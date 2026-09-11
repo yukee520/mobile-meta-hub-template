@@ -7,7 +7,6 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.shell.MainReactPackage
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
-import com.mobilemetahub.BuildConfig
 
 class MainApplication : Application(), ReactApplication {
 
@@ -21,10 +20,30 @@ class MainApplication : Application(), ReactApplication {
 
         override fun getJSMainModuleName(): String = "index"
 
-        override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+        override fun getUseDeveloperSupport(): Boolean {
+          return try {
+            val clazz = Class.forName("${packageName}.BuildConfig")
+            clazz.getField("DEBUG").getBoolean(null)
+          } catch (e: Exception) {
+            false
+          }
+        }
 
-        override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-        override val isHermesEnabled: Boolean = BuildConfig.IS_HERMES_ENABLED
+        override val isNewArchEnabled: Boolean
+          get() = try {
+            val clazz = Class.forName("${packageName}.BuildConfig")
+            clazz.getField("IS_NEW_ARCHITECTURE_ENABLED").getBoolean(null)
+          } catch (e: Exception) {
+            false
+          }
+
+        override val isHermesEnabled: Boolean
+          get() = try {
+            val clazz = Class.forName("${packageName}.BuildConfig")
+            clazz.getField("IS_HERMES_ENABLED").getBoolean(null)
+          } catch (e: Exception) {
+            true
+          }
       }
 
   override fun getReactNativeHost(): ReactNativeHost {
