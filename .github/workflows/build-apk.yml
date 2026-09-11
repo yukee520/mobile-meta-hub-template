@@ -28,33 +28,33 @@ jobs:
     - name: Install Dependencies
       run: npm install
 
-    - name: Prepare Dynamic App Identity
+    - name: Rebrand App Dynamically
       run: |
         RAW_NAME="${{ github.event.repository.name }}"
         APP_NAME="$RAW_NAME"
         CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
         PACKAGE_NAME="com.${CLEAN_PKG}.app"
 
-        echo "Rebranding all native and JS layers dynamically to: '$APP_NAME'"
+        echo "Rebranding all layers dynamically to: '$APP_NAME'"
 
-        # 1. Dynamically update app.json (index.js imports the component name from here)
+        # 1. Update app.json (Ensures JS bundler reads the updated name)
         if [ -f app.json ]; then
           npx jq ".name=\"$APP_NAME\" | .displayName=\"$APP_NAME\"" app.json > tmp.json && mv tmp.json app.json
         fi
 
-        # 2. Update Launcher Display Name in Android Resources
+        # 2. Update strings.xml
         STRINGS_FILE="android/app/src/main/res/values/strings.xml"
         if [ -f "$STRINGS_FILE" ]; then
           sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$APP_NAME<\/string>/" "$STRINGS_FILE"
         fi
 
-        # 3. Update Android Application ID in build.gradle
+        # 3. Update build.gradle
         GRADLE_FILE="android/app/build.gradle"
         if [ -f "$GRADLE_FILE" ]; then
           sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
         fi
 
-        # 4. Sync MainActivity.kt / MainActivity.java component registration name
+        # 4. Update MainActivity
         MAIN_ACT_KT=$(find android/app/src/main/java -name "MainActivity.kt" 2>/dev/null)
         MAIN_ACT_JAVA=$(find android/app/src/main/java -name "MainActivity.java" 2>/dev/null)
 
@@ -66,12 +66,17 @@ jobs:
           sed -i -E "s/getMainComponentName\(\) \{ return \".*\"; \}/getMainComponentName() { return \"$APP_NAME\"; }/" "$MAIN_ACT_JAVA"
         fi
 
+        # 5. Direct replacement in index.js to prevent stale bundle imports
+        sed -i "s/registerComponent('.*'/registerComponent('$APP_NAME'/" index.js 2>/dev/null || true
+        sed -i "s/registerComponent(\".*\"/registerComponent(\"$APP_NAME\"/" index.js 2>/dev/null || true
+
     - name: Make Gradle executable
       run: chmod +x android/gradlew
 
-    - name: Build Android Release APK
+    - name: Clean Gradle Cache & Build Release APK
       run: |
         cd android
+        ./gradlew clean
         ./gradlew assembleRelease --no-daemon
 
     - name: Upload APK Artifact
