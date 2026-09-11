@@ -32,8 +32,16 @@ jobs:
           CLEAN_NAME=$(echo "$RAW_NAME" | sed 's/[^a-zA-Z0-9]//g')
           LOWER_NAME=$(echo "$CLEAN_NAME" | tr '[:upper:]' '[:lower:]')
 
-          echo "Renaming app to: $CLEAN_NAME with bundle ID: com.mobilemetahub.$LOWER_NAME"
-          npx react-native-rename "$CLEAN_NAME" -b "com.mobilemetahub.$LOWER_NAME" --skip-git-statu
+          echo "Setting app display name to: $CLEAN_NAME"
+
+          # 1. Update app.json
+          sed -i "s/\"name\": \".*\"/\"name\": \"$CLEAN_NAME\"/g" app.json
+          sed -i "s/\"displayName\": \".*\"/\"displayName\": \"$CLEAN_NAME\"/g" app.json
+
+          # 2. Update Android Display Title in strings.xml
+          if [ -f android/app/src/main/res/values/strings.xml ]; then
+            sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$CLEAN_NAME<\/string>/g" android/app/src/main/res/values/strings.xml
+          fi      
 
       - name: Setup Java JDK
         uses: actions/setup-java@v5
