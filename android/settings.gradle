@@ -1,11 +1,29 @@
 pluginManagement {
     includeBuild("../node_modules/@react-native/gradle-plugin")
+    plugins {
+        id "com.android.application" version "8.7.2"
+        id "com.android.library" version "8.7.2"
+    }
 }
+
 plugins {
     id("com.facebook.react.settings")
 }
+
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex -> 
     ex.autolinkLibrariesFromCommand() 
 }
+
 rootProject.name = 'mobile-meta-hub-template'
 include ':app'
+
+// Force all com.android.* plugin dependencies globally at the buildscript level
+gradle.settingsEvaluated {
+    pluginManagement.buildscript.configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'com.android.tools.build') {
+                details.useVersion '8.7.2'
+            }
+        }
+    }
+}
