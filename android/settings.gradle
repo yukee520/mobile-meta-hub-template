@@ -1,16 +1,19 @@
 pluginManagement {
-    includeBuild("../node_modules/@react-native/gradle-plugin")
+    includeBuild("../node_modules/@react-native/gradle-plugin") {
+        target {
+            buildscript {
+                configurations.all {
+                    resolutionStrategy {
+                        force("com.android.tools.build:gradle:8.7.2")
+                    }
+                }
+            }
+        }
+    }
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
-    }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "com.android") {
-                useModule("com.android.tools.build:gradle:8.7.2")
-            }
-        }
     }
 }
 
