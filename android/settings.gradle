@@ -6,31 +6,11 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
 plugins {
     id("com.facebook.react.settings")
 }
-
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex -> 
     ex.autolinkLibrariesFromCommand() 
 }
-
 rootProject.name = 'mobile-meta-hub-template'
 include ':app'
-
-// Force all buildscript configurations across all projects to use AGP 8.6.0 strictly
-gradle.allprojects { proj ->
-    proj.buildscript {
-        configurations.all {
-            resolutionStrategy {
-                force("com.android.tools.build:gradle:8.6.0")
-                eachDependency { details ->
-                    if (details.requested.group == "com.android.tools.build" && details.requested.name == "gradle") {
-                        details.useVersion("8.6.0")
-                        details.because("Align AGP version with React Native 0.76 internal DSL")
-                    }
-                }
-            }
-        }
-    }
-}
