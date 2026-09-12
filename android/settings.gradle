@@ -1,15 +1,15 @@
-pluginManagement {
-    includeBuild("../node_modules/@react-native/gradle-plugin") {
-        target {
-            buildscript {
-                configurations.all {
-                    resolutionStrategy {
-                        force("com.android.tools.build:gradle:8.7.2")
-                    }
-                }
-            }
-        }
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.7.2")
+    }
+}
+
+pluginManagement {
+    includeBuild("../node_modules/@react-native/gradle-plugin")
     repositories {
         google()
         mavenCentral()
