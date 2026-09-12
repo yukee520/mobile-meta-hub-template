@@ -1,14 +1,15 @@
 pluginManagement {
+    includeBuild("../node_modules/@react-native/gradle-plugin") {
+        dependencySubstitution {
+            substitute(module("com.android.tools.build:gradle"))
+                .using(module("com.android.tools.build:gradle:8.7.2"))
+        }
+    }
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
     }
-}
-
-// Intercept buildscript classpath resolution across all projects AND included builds
-gradle.settingsEvaluated {
-    includeBuild("../node_modules/@react-native/gradle-plugin")
 }
 
 plugins {
@@ -21,19 +22,3 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 
 rootProject.name = 'mobile-meta-hub-template'
 include ':app'
-
-// Force AGP 8.7.2 across ALL buildscripts before project evaluation begins
-gradle.allprojects { proj ->
-    proj.buildscript {
-        configurations.all {
-            resolutionStrategy {
-                force("com.android.tools.build:gradle:8.7.2")
-                eachDependency { details ->
-                    if (details.requested.group == "com.android.tools.build") {
-                        details.useVersion("8.7.2")
-                    }
-                }
-            }
-        }
-    }
-}
