@@ -12,11 +12,15 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.2.2")
+        classpath("com.android.tools.build:gradle:8.7.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
 
-plugins {
-    id("com.facebook.react.rootproject") apply false
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
