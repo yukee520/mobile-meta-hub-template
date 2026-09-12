@@ -1,11 +1,14 @@
 pluginManagement {
+    includeBuild("../node_modules/@react-native/gradle-plugin") {
+        dependencySubstitution {
+            substitute(module("com.android.tools.build:gradle"))
+                .using(module("com.android.tools.build:gradle:8.7.2"))
+        }
+    }
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url = uri("../node_modules/@react-native/gradle-plugin")
-        }
     }
 }
 
