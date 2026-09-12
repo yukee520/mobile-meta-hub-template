@@ -1,5 +1,12 @@
 pluginManagement {
     includeBuild("../node_modules/@react-native/gradle-plugin")
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.namespace == "com.android") {
+                useModule("com.android.tools.build:gradle:8.7.2")
+            }
+        }
+    }
 }
 plugins {
     id("com.facebook.react.settings")
