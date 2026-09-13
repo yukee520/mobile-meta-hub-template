@@ -46,29 +46,25 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Fix Codegen Target Duplication
+      - name: Fix Codegen Include Paths
         run: |
-          # Restore CMakeLists.txt clean state in node_modules if modified
-          git checkout -- node_modules/react-native-safe-area-context/ 2>/dev/null || true
+          # Reset any modified files in node_modules
+          git checkout -- node_modules/ 2>/dev/null || true
 
-          # Provide include paths to app CMakeLists so autolinked target finds codegen headers
+          # Inject generated codegen path into main CMake file
           APP_CMAKE="android/app/src/main/jni/CMakeLists.txt"
           if [ -f "$APP_CMAKE" ]; then
-            echo 'target_include_directories(appmodules PRIVATE "${REACT_ANDROID_DIR}/../react-native-safe-area-context/common/cpp")' >> "$APP_CMAKE"
-          fi
-
-          # Disable safe-area-context CMake inclusion from root gradle to prevent dual target generation
-          SETTINGS_FILE="android/settings.gradle"
-          if [ -f "$SETTINGS_FILE" ]; then
-            sed -i '/react-native-safe-area-context.*CMakeLists.txt/d' "$SETTINGS_FILE"
+            echo 'include_directories("${CMAKE_CURRENT_BINARY_DIR}/../generated/source/codegen/jni")' >> "$APP_CMAKE"
+            echo 'include_directories("${PROJECT_BUILD_DIR}/generated/source/codegen/jni")' >> "$APP_CMAKE"
           fi
 
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
+      - name: Pre-generate Codegen & Build Release APK
         run: |
           cd android
+          ./gradlew generateCodegenArtifactsFromSchema --no-daemon
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
