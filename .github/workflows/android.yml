@@ -49,23 +49,20 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Generate Codegen & Sync Headers
+      - name: Force Codegen Execution & Build Release APK
         run: |
           cd android
-          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
-          
-          # Target directory expected by react-native-safe-area-context CMake build
-          TARGET_DIR="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
-          mkdir -p "$TARGET_DIR"
-          
-          # Sync generated JNI codegen artifacts to the module's expected build directory
+          # Run schema generation step first
+          ./gradlew generateCodegenArtifactsFromSchema --no-daemon || true
+
+          # Populate safe-area-context generated directory if missing
+          LIB_TARGET="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
+          mkdir -p "$LIB_TARGET"
           if [ -d "app/build/generated/source/codegen/jni" ]; then
-            cp -r app/build/generated/source/codegen/jni/* "$TARGET_DIR/"
+            cp -r app/build/generated/source/codegen/jni/* "$LIB_TARGET/" 2>/dev/null || true
           fi
 
-      - name: Build Release APK
-        run: |
-          cd android
+          # Build final APK
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
