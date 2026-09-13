@@ -49,17 +49,20 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Pre-generate Codegen and Link Paths
+      - name: Execute Full JS & Native Codegen
         run: |
+          # 1. Trigger CLI codegen to generate C++ headers from schema
+          npx react-native codegen || true
+
+          # 2. Trigger Gradle codegen task
           cd android
-          # Run codegen task explicitly to generate header files
           ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
 
-          # Create directory structure expected by safe-area-context CMake script
-          TARGET_DIR="../node_modules/react-native-safe-area-context/build/generated/source/codegen/jni"
+          # 3. Create missing jni path inside node_modules package build directory
+          TARGET_DIR="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
           mkdir -p "$TARGET_DIR"
 
-          # Copy generated headers over to safe-area-context node_modules path
+          # 4. Copy all generated schema headers to safe-area-context target
           if [ -d "app/build/generated/source/codegen/jni" ]; then
             cp -r app/build/generated/source/codegen/jni/* "$TARGET_DIR"/
           fi
