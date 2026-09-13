@@ -39,3 +39,10 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
 }
+
+// Disable C++ CMake build tasks when using Legacy Architecture
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith("buildCMake") || task.name.startsWith("generateJsonModel")) {
+        task.enabled = false
+    }
+}
