@@ -52,7 +52,7 @@ jobs:
       - name: Build Release APK
         run: |
           cd android
-          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
+          ./gradlew :react-native-safe-area-context:generateCodegenArtifactsFromSchema --no-daemon
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
