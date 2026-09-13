@@ -17,3 +17,9 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 
 rootProject.name = 'mobile-meta-hub-template'
 include ':app'
+
+pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+    }
+}
