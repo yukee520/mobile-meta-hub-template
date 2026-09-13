@@ -46,13 +46,21 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Idempotent Patch for safe-area-context CMake Target
+      - name: Fix Codegen Target Duplication
         run: |
-          SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
-          if [ -f "$SAFE_CMAKE" ]; then
-            # Guard add_library so it only defines react_codegen_safeareacontext once
-            sed -i 's/add_library(react_codegen_safeareacontext SHARED/if(NOT TARGET react_codegen_safeareacontext)\nadd_library(react_codegen_safeareacontext SHARED/' "$SAFE_CMAKE"
-            echo -e "\nendif()" >> "$SAFE_CMAKE"
+          # Restore CMakeLists.txt clean state in node_modules if modified
+          git checkout -- node_modules/react-native-safe-area-context/ 2>/dev/null || true
+
+          # Provide include paths to app CMakeLists so autolinked target finds codegen headers
+          APP_CMAKE="android/app/src/main/jni/CMakeLists.txt"
+          if [ -f "$APP_CMAKE" ]; then
+            echo 'target_include_directories(appmodules PRIVATE "${REACT_ANDROID_DIR}/../react-native-safe-area-context/common/cpp")' >> "$APP_CMAKE"
+          fi
+
+          # Disable safe-area-context CMake inclusion from root gradle to prevent dual target generation
+          SETTINGS_FILE="android/settings.gradle"
+          if [ -f "$SETTINGS_FILE" ]; then
+            sed -i '/react-native-safe-area-context.*CMakeLists.txt/d' "$SETTINGS_FILE"
           fi
 
       - name: Make Gradle executable
