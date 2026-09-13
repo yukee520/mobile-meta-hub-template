@@ -49,10 +49,10 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Run Global Codegen & Build APK
+      - name: Generate Codegen Headers & Build APK
         run: |
+          npx react-native codegen
           cd android
-          ./gradlew generateCodegenArtifactsFromSchema --no-daemon
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
