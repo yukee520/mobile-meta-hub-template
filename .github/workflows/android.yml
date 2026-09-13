@@ -46,12 +46,14 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Patch safe-area-context CMake Include Paths
+      - name: Patch safe-area-context CMake Global Include Paths
         run: |
           SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
           if [ -f "$SAFE_CMAKE" ]; then
-            # Add common/cpp directly to target_include_directories so Clang locates local component headers
-            sed -i 's|target_include_directories(react_codegen_safeareacontext PUBLIC|target_include_directories(react_codegen_safeareacontext PUBLIC\n  ${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp|g' "$SAFE_CMAKE"
+            # Append global include paths so both internal library targets and appmodules find the C++ headers
+            echo "" >> "$SAFE_CMAKE"
+            echo "target_include_directories(react_codegen_safeareacontext INTERFACE \${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp \${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp/react/renderer/components/safeareacontext)" >> "$SAFE_CMAKE"
+            echo "target_include_directories(safeareacontext INTERFACE \${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp \${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp/react/renderer/components/safeareacontext)" >> "$SAFE_CMAKE"
           fi
 
       - name: Make Gradle executable
