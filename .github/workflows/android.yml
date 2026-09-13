@@ -49,23 +49,23 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Pre-generate Codegen and Bridge Header Directories
+      - name: Pre-generate Codegen & Patch Header Paths
         run: |
           cd android
-          # 1. Force Gradle to generate the codegen files first
-          ./gradlew generateCodegenArtifactsFromSchema --no-daemon || true
+          # 1. Force full app codegen run to generate all C++ headers
+          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
 
-          # 2. Define source and destination header paths
-          SRC_JNI="app/build/generated/source/codegen/jni"
-          DEST_SAFE="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
+          # 2. Patch safe-area-context CMakeLists to point directly to app codegen output
+          SAFE_CMAKE="../node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
+          if [ -f "$SAFE_CMAKE" ]; then
+            sed -i 's|${CMAKE_CURRENT_SOURCE_DIR}/../../../build/generated/source/codegen/jni|${PROJECT_ROOT_DIR}/app/build/generated/source/codegen/jni|g' "$SAFE_CMAKE"
+          fi
 
-          # 3. Create missing target folders
-          mkdir -p "$SRC_JNI"
-          mkdir -p "$DEST_SAFE"
-
-          # 4. Mirror generated headers to where safe-area-context expects them
-          if [ -d "$SRC_JNI" ]; then
-            cp -r "$SRC_JNI"/* "$DEST_SAFE"/ || true
+          # 3. Mirror generated headers to safe-area-context fallback paths
+          TARGET_DIR="../node_modules/react-native-safe-area-context/build/generated/source/codegen/jni"
+          mkdir -p "$TARGET_DIR"
+          if [ -d "app/build/generated/source/codegen/jni" ]; then
+            cp -r app/build/generated/source/codegen/jni/* "$TARGET_DIR"/
           fi
 
       - name: Build Release APK
