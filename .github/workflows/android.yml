@@ -1,0 +1,69 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '21'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Rebrand APK Metadata Dynamically
+      run: |
+        RAW_NAME="${{ github.event.repository.name }}"
+        APP_NAME="$RAW_NAME"
+        CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+        PACKAGE_NAME="com.${CLEAN_PKG}.app"
+
+        echo "Rebranding APK Metadata: App Name='$APP_NAME', Package ID='$PACKAGE_NAME'"
+
+        # 1. Update Home Screen App Title
+        STRINGS_FILE="android/app/src/main/res/values/strings.xml"
+        if [ -f "$STRINGS_FILE" ]; then
+          sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$APP_NAME<\/string>/" "$STRINGS_FILE"
+        fi
+
+        # 2. Update Android Package ID (allows independent app installations)
+        GRADLE_FILE="android/app/build.gradle"
+        if [ -f "$GRADLE_FILE" ]; then
+          sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
+        fi
+
+    - name: Make Gradle executable
+      run: chmod +x android/gradlew
+
+    - name: Generate Codegen Artifacts
+      run: |
+        cd android
+        ./gradlew generateCodegenArtifactsFromSchema --no-daemon
+
+    - name: Build Release APK
+      run: |
+        cd android
+        ./gradlew assembleRelease --no-daemon
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.repository.name }}-APK
+        path: android/app/build/outputs/apk/release/*.apk
