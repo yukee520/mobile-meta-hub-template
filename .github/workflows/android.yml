@@ -46,26 +46,16 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
+      - name: Patch safe-area-context CMake Target Collision
+        run: |
+          SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
+          if [ -f "$SAFE_CMAKE" ]; then
+            # Comment out duplicate target definition in safe-area-context CMakeLists
+            sed -i 's/add_library(react_codegen_safeareacontext/# add_library(react_codegen_safeareacontext/' "$SAFE_CMAKE"
+          fi
+
       - name: Make Gradle executable
         run: chmod +x android/gradlew
-
-      - name: Execute Full JS & Native Codegen
-        run: |
-          # 1. Trigger CLI codegen to generate C++ headers from schema
-          npx react-native codegen || true
-
-          # 2. Trigger Gradle codegen task
-          cd android
-          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
-
-          # 3. Create missing jni path inside node_modules package build directory
-          TARGET_DIR="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
-          mkdir -p "$TARGET_DIR"
-
-          # 4. Copy all generated schema headers to safe-area-context target
-          if [ -d "app/build/generated/source/codegen/jni" ]; then
-            cp -r app/build/generated/source/codegen/jni/* "$TARGET_DIR"/
-          fi
 
       - name: Build Release APK
         run: |
