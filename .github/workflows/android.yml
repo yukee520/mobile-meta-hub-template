@@ -46,23 +46,20 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
+      - name: Patch safe-area-context CMake Include Paths
+        run: |
+          CMAKE_FILE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
+          if [ -f "$CMAKE_FILE" ]; then
+            # Append the root app's codegen path directly to CMake include directories
+            echo 'target_include_directories(react_codegen_safeareacontext PRIVATE "${PROJECT_BUILD_DIR}/generated/source/codegen/jni")' >> "$CMAKE_FILE"
+          fi
+
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Force Codegen Execution & Build Release APK
+      - name: Build Release APK
         run: |
           cd android
-          # Run schema generation step first
-          ./gradlew generateCodegenArtifactsFromSchema --no-daemon || true
-
-          # Populate safe-area-context generated directory if missing
-          LIB_TARGET="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
-          mkdir -p "$LIB_TARGET"
-          if [ -d "app/build/generated/source/codegen/jni" ]; then
-            cp -r app/build/generated/source/codegen/jni/* "$LIB_TARGET/" 2>/dev/null || true
-          fi
-
-          # Build final APK
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
