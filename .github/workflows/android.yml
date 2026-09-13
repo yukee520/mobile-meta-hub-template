@@ -33,7 +33,7 @@ jobs:
         run: |
           RAW_NAME="${{ github.event.repository.name }}"
           APP_NAME="$RAW_NAME"
-          CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
+          CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
           PACKAGE_NAME="com.${CLEAN_PKG}.app"
 
           STRINGS_FILE="android/app/src/main/res/values/strings.xml"
@@ -46,16 +46,27 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Patch safe-area-context CMake Include Paths
-        run: |
-          SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
-          if [ -f "$SAFE_CMAKE" ]; then
-            # Replace the relative codegen search path with the actual RN 0.87 app build directory
-            sed -i 's|${CMAKE_CURRENT_SOURCE_DIR}/../../../build/generated/source/codegen/jni|${PROJECT_ROOT_DIR}/app/build/generated/source/codegen/jni|g' "$SAFE_CMAKE"
-          fi
-
       - name: Make Gradle executable
         run: chmod +x android/gradlew
+
+      - name: Pre-generate Codegen and Bridge Header Directories
+        run: |
+          cd android
+          # 1. Force Gradle to generate the codegen files first
+          ./gradlew generateCodegenArtifactsFromSchema --no-daemon || true
+
+          # 2. Define source and destination header paths
+          SRC_JNI="app/build/generated/source/codegen/jni"
+          DEST_SAFE="../node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
+
+          # 3. Create missing target folders
+          mkdir -p "$SRC_JNI"
+          mkdir -p "$DEST_SAFE"
+
+          # 4. Mirror generated headers to where safe-area-context expects them
+          if [ -d "$SRC_JNI" ]; then
+            cp -r "$SRC_JNI"/* "$DEST_SAFE"/ || true
+          fi
 
       - name: Build Release APK
         run: |
