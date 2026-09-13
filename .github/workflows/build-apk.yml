@@ -56,6 +56,8 @@ jobs:
       run: |
         cd android
         ./gradlew clean
+      - name: Generate Codegen Artifacts
+        run: cd android && ./gradlew generateCodegenArtifactsFromSchema
         ./gradlew assembleRelease --no-daemon
 
     - name: Upload APK Artifact
