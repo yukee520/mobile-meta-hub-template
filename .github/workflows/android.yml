@@ -36,8 +36,6 @@ jobs:
           CLEAN_PKG=$(echo "$RAW_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
           PACKAGE_NAME="com.${CLEAN_PKG}.app"
 
-          echo "Rebranding APK Metadata: App Name='$APP_NAME', Package ID='$PACKAGE_NAME'"
-
           STRINGS_FILE="android/app/src/main/res/values/strings.xml"
           if [ -f "$STRINGS_FILE" ]; then
             sed -i "s/<string name=\"app_name\">.*<\/string>/<string name=\"app_name\">$APP_NAME<\/string>/" "$STRINGS_FILE"
@@ -51,10 +49,11 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Clean and Build Release APK
+      - name: Generate Native Codegen & Build APK
         run: |
           cd android
-          ./gradlew clean --no-daemon
+          ./gradlew :react-native-safe-area-context:generateCodegenArtifactsFromSchema --no-daemon
+          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
           ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
