@@ -46,18 +46,12 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Pre-generate Codegen Artifacts
+      - name: Patch Duplicate CMake Targets
         run: |
-          # Create expected codegen JNI target directory inside react-native-safe-area-context
-          SAFE_AREA_DIR="node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni"
-          mkdir -p "$SAFE_AREA_DIR"
-
-          # Execute React Native CLI Codegen script explicitly
-          npx react-native codegen
-
-          # Mirror generated C++ headers across both app and library build folders
-          if [ -d "android/app/build/generated/source/codegen/jni" ]; then
-            cp -r android/app/build/generated/source/codegen/jni/* "$SAFE_AREA_DIR/" 2>/dev/null || true
+          # Empty out safe-area-context's internal CMakeLists to resolve target collision
+          SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
+          if [ -f "$SAFE_CMAKE" ]; then
+            echo "# Cleared by CI to avoid duplicate CMake target with RN 0.87 autolinking" > "$SAFE_CMAKE"
           fi
 
       - name: Make Gradle executable
