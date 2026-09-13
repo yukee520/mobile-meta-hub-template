@@ -48,21 +48,13 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
+      - name: Run React Native Codegen CLI
+        run: npx react-native codegen
+
       - name: Make Gradle executable
         run: chmod +x android/gradlew
-
-      - name: Generate Codegen Artifacts
-        run: |
-          cd android
-          ./gradlew generateCodegenArtifactsFromSchema --no-daemon
 
       - name: Build Release APK
         run: |
           cd android
           ./gradlew assembleRelease --no-daemon
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}-APK
-          path: android/app/build/outputs/apk/release/*.apk
