@@ -46,14 +46,6 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
-      - name: Fix safe-area-context C++ Include Headers
-        run: |
-          # Replace full namespace include paths with local relative include paths
-          find node_modules/react-native-safe-area-context/common/cpp -type f \( -name "*.h" -o -name "*.cpp" \) -exec sed -i \
-            's|#include <react/renderer/components/safeareacontext/\(.*\)>|#include "\1"|g' {} +
-          find node_modules/react-native-safe-area-context/android/src/main/jni -type f \( -name "*.h" -o -name "*.cpp" \) -exec sed -i \
-            's|#include <react/renderer/components/safeareacontext/\(.*\)>|#include "\1"|g' {} +
-
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 

@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h b/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h
+index 911025b..def2652 100644
+--- a/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h
++++ b/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h
+@@ -1,7 +1,7 @@
+ #pragma once
+ 
+ #include <jsi/jsi.h>
+-#include <react/renderer/components/safeareacontext/EventEmitters.h>
++#include "EventEmitters.h"
+ #include <react/renderer/components/safeareacontext/Props.h>
+ #include <react/renderer/components/safeareacontext/RNCSafeAreaViewState.h>
+ #include <react/renderer/components/view/ConcreteViewShadowNode.h>
