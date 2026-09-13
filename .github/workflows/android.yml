@@ -49,24 +49,30 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Pre-generate Codegen & Patch Header Paths
+      - name: Generate Codegen & Map C++ Header Paths
         run: |
           cd android
-          # 1. Force full app codegen run to generate all C++ headers
-          ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon
 
-          # 2. Patch safe-area-context CMakeLists to point directly to app codegen output
-          SAFE_CMAKE="../node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
-          if [ -f "$SAFE_CMAKE" ]; then
-            sed -i 's|${CMAKE_CURRENT_SOURCE_DIR}/../../../build/generated/source/codegen/jni|${PROJECT_ROOT_DIR}/app/build/generated/source/codegen/jni|g' "$SAFE_CMAKE"
-          fi
+          # 1. Run React Native Codegen to output base files
+          npx react-native codegen || ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon || true
 
-          # 3. Mirror generated headers to safe-area-context fallback paths
-          TARGET_DIR="../node_modules/react-native-safe-area-context/build/generated/source/codegen/jni"
-          mkdir -p "$TARGET_DIR"
-          if [ -d "app/build/generated/source/codegen/jni" ]; then
-            cp -r app/build/generated/source/codegen/jni/* "$TARGET_DIR"/
-          fi
+          # 2. Define source directory where codegen outputs files
+          APP_CODEGEN="app/build/generated/source/codegen/jni"
+          SAFE_CODEGEN="../node_modules/react-native-safe-area-context/build/generated/source/codegen/jni"
+
+          # 3. Create full nested path react/renderer/components/safeareacontext expected by Clang
+          mkdir -p "$APP_CODEGEN/react/renderer/components/safeareacontext"
+          mkdir -p "$SAFE_CODEGEN/react/renderer/components/safeareacontext"
+
+          # 4. Copy generated header files into nested path structures across both locations
+          for BASE_PATH in "$APP_CODEGEN" "$SAFE_CODEGEN"; do
+            if [ -d "$BASE_PATH" ]; then
+              cp -r $BASE_PATH/*.h "$BASE_PATH/react/renderer/components/safeareacontext/" 2>/dev/null || true
+              if [ -d "$BASE_PATH/safeareacontext" ]; then
+                cp -r $BASE_PATH/safeareacontext/*.h "$BASE_PATH/react/renderer/components/safeareacontext/" 2>/dev/null || true
+              fi
+            fi
+          done
 
       - name: Build Release APK
         run: |
