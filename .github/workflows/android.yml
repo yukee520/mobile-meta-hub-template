@@ -46,33 +46,16 @@ jobs:
             sed -i "s/applicationId \".*\"/applicationId \"$PACKAGE_NAME\"/" "$GRADLE_FILE"
           fi
 
+      - name: Patch safe-area-context CMake Include Paths
+        run: |
+          SAFE_CMAKE="node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt"
+          if [ -f "$SAFE_CMAKE" ]; then
+            # Add common/cpp directly to target_include_directories so Clang locates local component headers
+            sed -i 's|target_include_directories(react_codegen_safeareacontext PUBLIC|target_include_directories(react_codegen_safeareacontext PUBLIC\n  ${CMAKE_CURRENT_SOURCE_DIR}/../../../../common/cpp|g' "$SAFE_CMAKE"
+          fi
+
       - name: Make Gradle executable
         run: chmod +x android/gradlew
-
-      - name: Generate Codegen & Map C++ Header Paths
-        run: |
-          cd android
-
-          # 1. Run React Native Codegen to output base files
-          npx react-native codegen || ./gradlew :app:generateCodegenArtifactsFromSchema --no-daemon || true
-
-          # 2. Define source directory where codegen outputs files
-          APP_CODEGEN="app/build/generated/source/codegen/jni"
-          SAFE_CODEGEN="../node_modules/react-native-safe-area-context/build/generated/source/codegen/jni"
-
-          # 3. Create full nested path react/renderer/components/safeareacontext expected by Clang
-          mkdir -p "$APP_CODEGEN/react/renderer/components/safeareacontext"
-          mkdir -p "$SAFE_CODEGEN/react/renderer/components/safeareacontext"
-
-          # 4. Copy generated header files into nested path structures across both locations
-          for BASE_PATH in "$APP_CODEGEN" "$SAFE_CODEGEN"; do
-            if [ -d "$BASE_PATH" ]; then
-              cp -r $BASE_PATH/*.h "$BASE_PATH/react/renderer/components/safeareacontext/" 2>/dev/null || true
-              if [ -d "$BASE_PATH/safeareacontext" ]; then
-                cp -r $BASE_PATH/safeareacontext/*.h "$BASE_PATH/react/renderer/components/safeareacontext/" 2>/dev/null || true
-              fi
-            fi
-          done
 
       - name: Build Release APK
         run: |
